@@ -1,0 +1,31 @@
+{
+  "name": "gitex",
+  "version": "1.0.0",
+  "description": "ride hailing platform",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rafcourt/gitex.git"
+  },
+  "keywords": [
+    "ride",
+    "hailing",
+    "taxi",
+    "cab",
+    "uberish"
+  ],
+  "author": "rafcourt",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/rafcourt/gitex/issues"
+  },
+  "homepage": "https://rafcourt.github.io/gitex",
+  "dependencies": {
+    "gh-pages": "^6.1.1"
+  }
+}
