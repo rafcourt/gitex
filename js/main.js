@@ -563,14 +563,16 @@ function togglePaymentOptionsContainer(){
 }
 
 function multipleRouteHide(){
+    
     directionsDisplayMap.setMap(null);
 }
 
 function multipleRoute(directionsService, directionsDisplay){
+    
     directionsDisplayMap = new google.maps.DirectionsRenderer({suppressMarkers:true});
     directionsDisplayMap.setOptions({
         polylineOptions: {
-            strokeColor: '#FFD300',
+            strokeColor: '#00D300',
             strokeWeight: 5,
             strokeOpacity:0
         }
@@ -650,7 +652,7 @@ function renderDirectionsPolylines(response,map){
         strokeOpacity: 0,
         strokeWeight: 5
     },{
-        strokeColor: '#FFD300',
+        strokeColor: '#00D300',
         strokeWeight: 5
     }];
     var legs = response.routes[0].legs;
@@ -688,18 +690,45 @@ function fromSetRouteToAddRoute(){
 var map;
 var directionsDisplay;
 
+function getGeoLocation(callback){
+    const options = {
+        enableHighAccuracy: true,
+        timeout: 5000,
+        maximumAge: 0,
+      };
+      
+      function success(pos) {
+        const crd = pos.coords;
+      
+        console.log("Your current position is:");
+        console.log(`Latitude : ${crd.latitude}`);
+        console.log(`Longitude: ${crd.longitude}`);
+        console.log(`More or less ${crd.accuracy} meters.`);
+        callback({lat:crd.latitude, lng:crd.longitude});
+      }
+      
+      function error(err) {
+        console.warn(`ERROR(${err.code}): ${err.message}`);
+      }
+      
+      navigator.geolocation.getCurrentPosition(success, error, options);
+}
 function initMap() {
-    map = new google.maps.Map(document.getElementById('map'), {
-        mapTypeControl: false,
-        center: {lat: 42.1945, lng: -71.8356},
-        zoom: 13,
-        fullscreenControl: false,
+    getGeoLocation(({lat, lng})=>{
+        // let lat = 51.4694477
+        // let lng = -0.0422662
+        map = new google.maps.Map(document.getElementById('map'), {
+            mapTypeControl: false,
+            center: {lat, lng},
+            zoom: 13,
+            fullscreenControl: false,
+        });
+        directionsDisplay = new google.maps.DirectionsRenderer();
+        new AutocompleteDirectionsHandler(map);
+        $(window).on('resize', function(){
+            google.maps.event.trigger(map, 'resize');
+        })
     });
-    directionsDisplay = new google.maps.DirectionsRenderer();
-    new AutocompleteDirectionsHandler(map);
-    $(window).on('resize', function(){
-        google.maps.event.trigger(map, 'resize');
-    })
 }
 
 function hideMapRequestPin(){
@@ -742,7 +771,7 @@ function AutocompleteDirectionsHandler(map) {
     this.directionsDisplayMap = new google.maps.DirectionsRenderer({suppressMarkers:true});
     this.directionsDisplayMap.setOptions({
         polylineOptions: {
-            strokeColor: '#FFD300',
+            strokeColor: '#00FF00',
             strokeWeight: 5
         }
     });
@@ -767,12 +796,12 @@ function AutocompleteDirectionsHandler(map) {
     var originAutocomplete = new google.maps.places.Autocomplete(originInput);
     // originInputContainer.appendChild(originAutocomplete);
     // Specify just the place data fields that you need.
-    originAutocomplete.setFields(['place_id']);
+    originAutocomplete.setFields(['place_id','name']);
 
     var destinationAutocomplete =
         new google.maps.places.Autocomplete(destinationInput);
     // Specify just the place data fields that you need.
-    destinationAutocomplete.setFields(['place_id']);
+    destinationAutocomplete.setFields(['place_id','name']);
 
     this.setupPlaceChangedListener(originAutocomplete, 'ORIG');
     this.setupPlaceChangedListener(destinationAutocomplete, 'DEST');
@@ -794,8 +823,10 @@ AutocompleteDirectionsHandler.prototype.setupPlaceChangedListener = function(
         }
         if (mode === 'ORIG') {
             me.originPlaceId = place.place_id;
+            me.originPlaceName = place.name;
         } else {
             me.destinationPlaceId = place.place_id;
+            me.destinationPlaceName = place.name;
         }
         me.route();
     });
@@ -808,14 +839,22 @@ AutocompleteDirectionsHandler.prototype.route = function() {
     }
     var me = this;
     $('.request-ride-btn').removeClass('hidden');
+    
     this.directionsService.route(
         {
-            origin: "157 Highland Street, Worcester MA",
-            destination: "919 Main Street, Worcester MA",
+            origin: this.originPlaceName,
+            destination: this.destinationPlaceName,
+            // origin: "157 Highland Street, Worcester MA",
+            // destination: "919 Main Street, Worcester MA",
             travelMode: this.travelMode
         },
         function(response, status) {
             if (status === 'OK') {
+                me.distance = response.routes[0].legs[0].distance
+                me.duration = response.routes[0].legs[0].duration
+                $('.about-section-title div').each((a,b,c)=>{
+                    $(b).html(`${me.distance.text} / <span class="black-text">${me.duration.text}</span>`);
+                });
                 var icons = {
                     start: new google.maps.MarkerImage(
                         // URL
@@ -842,7 +881,7 @@ AutocompleteDirectionsHandler.prototype.route = function() {
                 me.directionsDisplayMap.setMap(map);
                 me.directionsDisplayMap.setOptions({
                     polylineOptions: {
-                        strokeColor: '#FFD300',
+                        strokeColor: '#00D300',
                         strokeWeight: 5
                     }
                 });
